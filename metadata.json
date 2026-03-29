@@ -1,0 +1,7 @@
+{
+  "name": "Mpaa Milk Distributers",
+  "description": "A comprehensive milk collection, farmer management, and payment processing system for Mpaa Distributers.",
+  "requestFramePermissions": [
+    "notifications"
+  ]
+}

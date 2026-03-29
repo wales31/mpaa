@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile information and role.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "farmer": {
+      "title": "Farmer",
+      "description": "Farmer details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "phone"]
+    },
+    "collection": {
+      "title": "Milk Collection",
+      "description": "Record of milk collection from a farmer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "amount": { "type": "number", "description": "Amount in liters" },
+        "quality": { "type": "number", "description": "Quality score (e.g., fat content %)" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "collectedBy": { "type": "string", "description": "UID of the user who recorded the collection" }
+      },
+      "required": ["id", "farmerId", "amount", "timestamp", "collectedBy"]
+    },
+    "payment": {
+      "title": "Payment",
+      "description": "Payment record for a farmer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "amount": { "type": "number" },
+        "period": { "type": "string", "description": "Month/Year (e.g., 2026-03)" },
+        "status": { "type": "string", "enum": ["pending", "paid"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "farmerId", "amount", "period", "status", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "user",
+      "description": "User profiles"
+    },
+    "/farmers/{farmerId}": {
+      "schema": "farmer",
+      "description": "Farmer records"
+    },
+    "/collections/{collectionId}": {
+      "schema": "collection",
+      "description": "Milk collection records"
+    },
+    "/payments/{paymentId}": {
+      "schema": "payment",
+      "description": "Payment records"
+    }
+  }
+}
