@@ -1,6 +1,7 @@
 package com.mpaa.debugwebview
 
 import android.annotation.SuppressLint
+import android.content.pm.ApplicationInfo
 import android.os.Build
 import android.os.Bundle
 import android.webkit.WebSettings
@@ -17,7 +18,8 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webview)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+            val isDebuggable = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+            WebView.setWebContentsDebuggingEnabled(isDebuggable)
         }
 
         webView.webViewClient = WebViewClient()
