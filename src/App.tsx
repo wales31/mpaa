@@ -15,7 +15,8 @@ import {
   X,
   Bell,
   Trash2,
-  Edit2
+  Edit2,
+  Waypoints
 } from 'lucide-react';
 import { 
   auth, 
@@ -145,6 +146,22 @@ interface Payment {
   timestamp: any;
 }
 
+type ApiEndpoint =
+  | 'POST /api/farmers'
+  | 'PUT /api/farmers/:id'
+  | 'DELETE /api/farmers/:id'
+  | 'POST /api/collections'
+  | 'POST /api/payments/generate'
+  | 'PATCH /api/payments/:id/pay';
+
+interface ApiLogEntry {
+  id: string;
+  endpoint: ApiEndpoint;
+  request: Record<string, unknown>;
+  response: Record<string, unknown>;
+  createdAt: string;
+}
+
 // --- Components ---
 
 const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
@@ -202,6 +219,26 @@ export default function App() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [collections, setCollections] = useState<MilkCollection[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [apiLogs, setApiLogs] = useState<ApiLogEntry[]>([]);
+
+  const runEndpoint = async <T extends Record<string, unknown>>(
+    endpoint: ApiEndpoint,
+    request: Record<string, unknown>,
+    handler: () => Promise<T>
+  ) => {
+    const response = await handler();
+    setApiLogs((prev) => [
+      {
+        id: crypto.randomUUID(),
+        endpoint,
+        request,
+        response,
+        createdAt: new Date().toISOString()
+      },
+      ...prev
+    ].slice(0, 20));
+    return response;
+  };
 
   // Auth Listener
   useEffect(() => {
@@ -321,10 +358,11 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard farmers={farmers} collections={collections} payments={payments} />;
-      case 'farmers': return <FarmerManagement farmers={farmers} isAdmin={profile?.role === 'admin'} />;
-      case 'collections': return <CollectionManagement collections={collections} farmers={farmers} isAdmin={profile?.role === 'admin'} />;
-      case 'payments': return <PaymentManagement payments={payments} farmers={farmers} collections={collections} isAdmin={profile?.role === 'admin'} />;
-      case 'settings': return <SettingsPage profile={profile} />;
+      case 'farmers': return <FarmerManagement farmers={farmers} isAdmin={profile?.role === 'admin'} runEndpoint={runEndpoint} />;
+      case 'collections': return <CollectionManagement collections={collections} farmers={farmers} isAdmin={profile?.role === 'admin'} runEndpoint={runEndpoint} />;
+      case 'payments': return <PaymentManagement payments={payments} farmers={farmers} collections={collections} isAdmin={profile?.role === 'admin'} runEndpoint={runEndpoint} />;
+      case 'settings': return <SettingsPage profile={profile} apiLogs={apiLogs} />;
+      case 'api': return <ApiConsole apiLogs={apiLogs} />;
       default: return <Dashboard farmers={farmers} collections={collections} payments={payments} />;
     }
   };
@@ -351,6 +389,7 @@ export default function App() {
               <NavItem active={activeTab === 'collections'} onClick={() => setActiveTab('collections')} icon={<Milk />} label="Collections" />
               <NavItem active={activeTab === 'payments'} onClick={() => setActiveTab('payments')} icon={<CreditCard />} label="Payments" />
               <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings />} label="Settings" />
+              <NavItem active={activeTab === 'api'} onClick={() => setActiveTab('api')} icon={<Waypoints />} label="API Console" />
             </nav>
 
             <div className="p-4 border-t border-slate-100">
@@ -539,7 +578,7 @@ function StatCard({ label, value, icon, color }: { label: string, value: string 
 }
 
 // --- Farmer Management ---
-function FarmerManagement({ farmers, isAdmin }: { farmers: Farmer[], isAdmin: boolean }) {
+function FarmerManagement({ farmers, isAdmin, runEndpoint }: { farmers: Farmer[], isAdmin: boolean, runEndpoint: <T extends Record<string, unknown>>(endpoint: ApiEndpoint, request: Record<string, unknown>, handler: () => Promise<T>) => Promise<T> }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [editingFarmer, setEditingFarmer] = useState<Farmer | null>(null);
@@ -561,10 +600,16 @@ function FarmerManagement({ farmers, isAdmin }: { farmers: Farmer[], isAdmin: bo
 
     try {
       if (editingFarmer) {
-        await updateDoc(doc(db, 'farmers', editingFarmer.id), data);
+        await runEndpoint('PUT /api/farmers/:id', { id: editingFarmer.id, ...data }, async () => {
+          await updateDoc(doc(db, 'farmers', editingFarmer.id), data);
+          return { ok: true, updatedId: editingFarmer.id };
+        });
       } else {
         const id = `FARM-${Date.now()}`;
-        await setDoc(doc(db, 'farmers', id), { ...data, id });
+        await runEndpoint('POST /api/farmers', { ...data, id }, async () => {
+          await setDoc(doc(db, 'farmers', id), { ...data, id });
+          return { ok: true, createdId: id };
+        });
       }
       setIsModalOpen(false);
       setEditingFarmer(null);
@@ -576,7 +621,10 @@ function FarmerManagement({ farmers, isAdmin }: { farmers: Farmer[], isAdmin: bo
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this farmer?')) return;
     try {
-      await deleteDoc(doc(db, 'farmers', id));
+      await runEndpoint('DELETE /api/farmers/:id', { id }, async () => {
+        await deleteDoc(doc(db, 'farmers', id));
+        return { ok: true, deletedId: id };
+      });
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, 'farmers');
     }
@@ -704,7 +752,7 @@ function FarmerManagement({ farmers, isAdmin }: { farmers: Farmer[], isAdmin: bo
 }
 
 // --- Collection Management ---
-function CollectionManagement({ collections, farmers, isAdmin }: { collections: MilkCollection[], farmers: Farmer[], isAdmin: boolean }) {
+function CollectionManagement({ collections, farmers, isAdmin, runEndpoint }: { collections: MilkCollection[], farmers: Farmer[], isAdmin: boolean, runEndpoint: <T extends Record<string, unknown>>(endpoint: ApiEndpoint, request: Record<string, unknown>, handler: () => Promise<T>) => Promise<T> }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -726,7 +774,10 @@ function CollectionManagement({ collections, farmers, isAdmin }: { collections: 
 
     try {
       const id = `COLL-${Date.now()}`;
-      await setDoc(doc(db, 'collections', id), { ...data, id });
+      await runEndpoint('POST /api/collections', { ...data, id }, async () => {
+        await setDoc(doc(db, 'collections', id), { ...data, id });
+        return { ok: true, createdId: id };
+      });
       setIsModalOpen(false);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'collections');
@@ -881,7 +932,7 @@ function CollectionManagement({ collections, farmers, isAdmin }: { collections: 
 }
 
 // --- Payment Management ---
-function PaymentManagement({ payments, farmers, collections, isAdmin }: { payments: Payment[], farmers: Farmer[], collections: MilkCollection[], isAdmin: boolean }) {
+function PaymentManagement({ payments, farmers, collections, isAdmin, runEndpoint }: { payments: Payment[], farmers: Farmer[], collections: MilkCollection[], isAdmin: boolean, runEndpoint: <T extends Record<string, unknown>>(endpoint: ApiEndpoint, request: Record<string, unknown>, handler: () => Promise<T>) => Promise<T> }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rate, setRate] = useState(45); // Default rate per liter
 
@@ -905,6 +956,7 @@ function PaymentManagement({ payments, farmers, collections, isAdmin }: { paymen
     });
 
     try {
+      let generatedCount = 0;
       for (const total of farmerTotals) {
         if (total.totalLiters === 0) continue;
         
@@ -913,17 +965,26 @@ function PaymentManagement({ payments, farmers, collections, isAdmin }: { paymen
         if (existing) continue;
 
         const id = `PAY-${Date.now()}-${total.farmerId}`;
-        await setDoc(doc(db, 'payments', id), {
-          id,
+        await runEndpoint('POST /api/payments/generate', {
           farmerId: total.farmerId,
-          amount: total.totalLiters * rate,
-          period,
-          status: 'pending',
-          timestamp: Timestamp.now()
+          totalLiters: total.totalLiters,
+          rate,
+          period
+        }, async () => {
+          await setDoc(doc(db, 'payments', id), {
+            id,
+            farmerId: total.farmerId,
+            amount: total.totalLiters * rate,
+            period,
+            status: 'pending',
+            timestamp: Timestamp.now()
+          });
+          return { ok: true, generatedId: id, amount: total.totalLiters * rate };
         });
+        generatedCount += 1;
       }
       setIsModalOpen(false);
-      alert('Payments generated successfully!');
+      alert(`Payments generated successfully! Created: ${generatedCount}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'payments');
     }
@@ -932,7 +993,10 @@ function PaymentManagement({ payments, farmers, collections, isAdmin }: { paymen
   const handleMarkAsPaid = async (id: string) => {
     if (!isAdmin) return;
     try {
-      await updateDoc(doc(db, 'payments', id), { status: 'paid' });
+      await runEndpoint('PATCH /api/payments/:id/pay', { id, status: 'paid' }, async () => {
+        await updateDoc(doc(db, 'payments', id), { status: 'paid' });
+        return { ok: true, paidId: id };
+      });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, 'payments');
     }
@@ -1053,7 +1117,7 @@ function PaymentManagement({ payments, farmers, collections, isAdmin }: { paymen
 }
 
 // --- Settings Page ---
-function SettingsPage({ profile }: { profile: UserProfile | null }) {
+function SettingsPage({ profile, apiLogs }: { profile: UserProfile | null, apiLogs: ApiLogEntry[] }) {
   return (
     <div className="max-w-2xl space-y-8">
       <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
@@ -1105,6 +1169,50 @@ function SettingsPage({ profile }: { profile: UserProfile | null }) {
           </div>
         </div>
       </div>
+
+      <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">API Integration Snapshot</h3>
+        <p className="text-sm text-slate-500 mb-5">Latest endpoint traffic generated by form inputs in this web app.</p>
+        <p className="text-sm font-semibold text-blue-600">{apiLogs.length} recent request(s) captured.</p>
+      </div>
+    </div>
+  );
+}
+
+function ApiConsole({ apiLogs }: { apiLogs: ApiLogEntry[] }) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">API Endpoint Presentation</h3>
+        <p className="text-slate-500">This view shows incoming payloads from forms and outgoing responses from endpoint handlers.</p>
+      </div>
+
+      {apiLogs.length === 0 ? (
+        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm text-slate-500">
+          No calls yet. Create or update a Farmer, Collection, or Payment to see request/response traffic.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {apiLogs.map((log) => (
+            <div key={log.id} className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <p className="font-bold text-slate-900">{log.endpoint}</p>
+                <p className="text-xs text-slate-500">{format(new Date(log.createdAt), 'MMM dd, yyyy h:mm:ss a')}</p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Incoming request</p>
+                  <pre className="text-xs whitespace-pre-wrap break-all text-slate-700">{JSON.stringify(log.request, null, 2)}</pre>
+                </div>
+                <div className="bg-emerald-50/50 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-emerald-700 mb-2 uppercase tracking-wider">Outgoing response</p>
+                  <pre className="text-xs whitespace-pre-wrap break-all text-slate-700">{JSON.stringify(log.response, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
