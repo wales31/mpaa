@@ -13,6 +13,14 @@ class AuthRepository {
   Stream<User?> authStateChanges() {
     return _firebaseAuth.authStateChanges();
   }
+
+  Future<void> signInForUxPreview() async {
+    await _firebaseAuth.signInAnonymously();
+  }
+
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
+  }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
