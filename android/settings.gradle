@@ -6,23 +6,11 @@ pluginManagement {
     }
 }
 
-if (this.metaClass.respondsTo(this, 'dependencyResolutionManagement', Closure)) {
-    dependencyResolutionManagement {
-        repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-        repositories {
-            google()
-            mavenCentral()
-        }
-    }
-} else {
-    // Fallback for older Gradle versions that don't support dependencyResolutionManagement.
-    // Keep repository declarations available so project sync still works.
-    def hasProjectRepositories = this.metaClass.respondsTo(this, 'repositories', Closure)
-    if (hasProjectRepositories) {
-        repositories {
-            google()
-            mavenCentral()
-        }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
     }
 }
 
