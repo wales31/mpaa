@@ -52,3 +52,18 @@ Generate Freezed and JSON model files:
 ```bash
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
+
+## 5) Week 1–2 architecture assets
+
+Architecture and migration parity baseline docs are in `mobile/docs/`:
+
+- `architecture-week1-2.md`
+- `data-contracts.md`
+- `ux-parity-spec.md`
+
+Global app patterns introduced in `mobile/lib/core/`:
+
+- error handling (`core/error`)
+- logging (`core/logging`)
+- analytics abstraction (`core/analytics`)
+- theming + design tokens (`core/theme`)

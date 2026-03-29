@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mpaa_mobile/core/router/app_router.dart';
+import 'package:mpaa_mobile/core/theme/app_theme.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -9,7 +9,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'MPAA',
-      theme: ThemeData(colorSchemeSeed: Colors.deepPurple),
+      theme: AppTheme.light(),
       routerConfig: appRouter,
     );
   }
