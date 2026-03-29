@@ -1,0 +1,51 @@
+name: Flutter Mobile CI
+
+on:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-mobile-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/flutter-mobile-ci.yml'
+
+jobs:
+  mobile-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build Android APK (dev)
+        run: |
+          flutter build apk \
+            --dart-define=APP_ENV=dev \
+            --dart-define=API_BASE_URL=https://api.dev.example.com \
+            --dart-define=FIREBASE_PROJECT_ID=mpaa-dev
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: mobile/build/app/outputs/flutter-apk/*.apk

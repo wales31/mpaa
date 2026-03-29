@@ -50,3 +50,13 @@ To inspect WebView with Chrome DevTools (debug builds):
 1. Enable Developer Options + USB debugging on device.
 2. Connect device and open `chrome://inspect` in desktop Chrome.
 3. Select the app WebView target.
+
+## Flutter mobile foundation (Week 1)
+
+A Flutter foundation scaffold now lives in `mobile/` with:
+
+- environment-aware config (`dev/stage/prod`) via `--dart-define`
+- Firebase + Riverpod + GoRouter + Dio + Freezed/JSON setup
+- CI workflow for analyze, test, and APK artifact builds
+
+See `mobile/README.md` and run `scripts/setup_flutter_app.sh` after installing Flutter.
