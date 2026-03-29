@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mpaa_mobile/app.dart';
@@ -16,8 +15,6 @@ Future<void> bootstrap() async {
   errorHandler.installGlobalHandlers();
 
   logger.info('Bootstrapping MPAA mobile app');
-
-  await Firebase.initializeApp();
 
   runApp(
     ProviderScope(
