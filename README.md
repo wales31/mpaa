@@ -26,14 +26,14 @@ This repo now includes a native Android WebView shell under `android/` that load
 
 - Android SDK installed (set `ANDROID_SDK_ROOT` or create `android/local.properties` with `sdk.dir=/path/to/Android/Sdk`)
 - Java 17+
-- Gradle 8+
+- Gradle 8+ (or use the included Gradle wrapper)
 
 ### Build steps
 
 1. Build and sync the web app into Android assets:
    `npm run android:sync`
 2. Build the debug APK:
-   `npm run android:debug`
+   `npm run android:debug` (uses `android/gradlew`)
 
 ### Output APK
 

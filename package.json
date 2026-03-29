@@ -10,7 +10,7 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "android:sync": "npm run build && node scripts/sync-android-assets.mjs",
-    "android:debug": "npm run android:sync && cd android && gradle assembleDebug"
+    "android:debug": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
