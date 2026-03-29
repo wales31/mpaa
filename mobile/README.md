@@ -36,7 +36,49 @@ flutter run \
   --dart-define=FIREBASE_PROJECT_ID=mpaa-prod
 ```
 
-## 3) Firebase setup
+
+## 3) Link this Flutter app to the same Firebase project/database used by web
+
+The web app in this repo uses `firebase-applet-config.json` with:
+
+- project: `gen-lang-client-0470901675`
+- web app id: `1:907517612385:web:3a0aba9931ecf8fd3cb520`
+- Firestore database id: `ai-studio-87ceaf75-f592-4224-be82-5e9fe92985ab`
+
+To connect mobile to the same backend:
+
+1. In Firebase Console, open project **gen-lang-client-0470901675**.
+2. Add **Android** and/or **iOS** app(s) for this project (use your package/bundle ids).
+3. From `mobile/`, run:
+
+```bash
+flutterfire configure --project=gen-lang-client-0470901675
+```
+
+This generates `lib/firebase_options.dart` and platform config files.
+
+4. Update `bootstrap.dart` initialization to use generated options:
+
+```dart
+import 'package:mpaa_mobile/firebase_options.dart';
+
+await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
+```
+
+5. If you need the same **named Firestore database** as web (`ai-studio-87ceaf75-f592-4224-be82-5e9fe92985ab`), use:
+
+```dart
+final firestore = FirebaseFirestore.instanceFor(
+  app: Firebase.app(),
+  databaseId: 'ai-studio-87ceaf75-f592-4224-be82-5e9fe92985ab',
+);
+```
+
+6. Ensure Firebase Auth and Firestore rules allow your mobile sign-in/users.
+
+## 4) Firebase setup
 
 Initialize Firebase for Flutter once platforms are created:
 
@@ -45,7 +87,7 @@ dart pub global activate flutterfire_cli
 flutterfire configure
 ```
 
-## 4) Code generation
+## 5) Code generation
 
 Generate Freezed and JSON model files:
 
@@ -53,7 +95,7 @@ Generate Freezed and JSON model files:
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
-## 5) Week 1–2 architecture assets
+## 6) Week 1–2 architecture assets
 
 Architecture and migration parity baseline docs are in `mobile/docs/`:
 
