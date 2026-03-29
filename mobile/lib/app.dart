@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mpaa_mobile/core/router/app_router.dart';
+import 'package:mpaa_mobile/firebase_options.dart';
 import 'package:mpaa_mobile/core/theme/app_theme.dart';
 import 'package:mpaa_mobile/core/widgets/error_view.dart';
 
@@ -23,7 +24,9 @@ class _AppState extends State<App> {
   }
 
   Future<void> _initializeFirebase() async {
-    await Firebase.initializeApp().timeout(
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(
       const Duration(seconds: 15),
       onTimeout: () => throw TimeoutException(
         'Firebase initialization timed out. Check your Firebase config files.',
