@@ -109,3 +109,25 @@ Global app patterns introduced in `mobile/lib/core/`:
 - logging (`core/logging`)
 - analytics abstraction (`core/analytics`)
 - theming + design tokens (`core/theme`)
+
+## Troubleshooting
+
+### `Cannot add task 'clean' as a task with that name already exists`
+
+If Gradle fails with this error from `mobile/android/build.gradle.kts`, remove any
+manually-added `clean` task from that file.
+
+Recent Android Gradle Plugin versions already provide a `clean` task, so adding this
+again causes a duplicate-task failure:
+
+```kotlin
+tasks.register<Delete>("clean") {
+    delete(rootProject.layout.buildDirectory)
+}
+```
+
+Use the built-in task instead:
+
+```bash
+./gradlew clean
+```
