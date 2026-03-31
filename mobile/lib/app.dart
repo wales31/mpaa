@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mpaa_mobile/core/router/app_router.dart';
 import 'package:mpaa_mobile/firebase_options.dart';
@@ -24,14 +25,23 @@ class _AppState extends State<App> {
   }
 
   Future<void> _initializeFirebase() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(
+    await _initializeFirebaseByPlatform().timeout(
       const Duration(seconds: 15),
       onTimeout: () => throw TimeoutException(
         'Firebase initialization timed out. Check your Firebase config files.',
       ),
     );
+  }
+
+  Future<void> _initializeFirebaseByPlatform() async {
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      return;
+    }
+
+    await Firebase.initializeApp();
   }
 
   void _retryInitialization() {
@@ -62,7 +72,7 @@ class _AppState extends State<App> {
             home: Scaffold(
               body: ErrorView(
                 message:
-                    'Startup failed: ${snapshot.error}\n\nRun flutterfire configure and verify google-services files are present.',
+                    'Startup failed: ${snapshot.error}\n\nFor Android/iOS, ensure google-services files are installed and run `flutter clean && flutter pub get` before retrying. For Web, re-run flutterfire configure if needed.',
                 onRetry: _retryInitialization,
               ),
             ),

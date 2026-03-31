@@ -3,10 +3,11 @@ import 'package:firebase_core_platform_interface/firebase_core_platform_interfac
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Firebase configuration used when platform resource files are not present.
+/// Firebase configuration used by FlutterFire.
 ///
 /// These defaults point to the same Firebase project used by the web app in
-/// this repository, and can be overridden with --dart-define values.
+/// this repository, and can be overridden with --dart-define values. Native
+/// platforms should prefer their google-services files for initialization.
 class DefaultFirebaseOptions {
   static const String _apiKey = String.fromEnvironment(
     'FIREBASE_API_KEY',
@@ -42,9 +43,8 @@ class DefaultFirebaseOptions {
     authDomain: 'gen-lang-client-0470901675.firebaseapp.com',
   );
 
-  // Until flutterfire is configured per platform, default mobile/desktop to
-  // the same core project values so Firebase can initialize without requiring
-  // values.xml / GoogleService-Info.plist.
+  // Native defaults remain available for testing, but production Android/iOS
+  // builds should initialize from platform google-services files.
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: _apiKey,
     appId: _appId,
